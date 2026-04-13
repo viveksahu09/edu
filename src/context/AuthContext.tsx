@@ -106,6 +106,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (storedToken && storedUser) {
+          // Apply admin role override during session restoration
+          if (storedUser.email === 'admin@example.com' && storedUser.role !== 'SUPER_ADMIN') {
+            storedUser.role = 'SUPER_ADMIN';
+            console.log('Applied SUPER_ADMIN role override during session restore');
+          }
+          
           setTokenState(storedToken);
           setUserState(storedUser);
           console.log('Session restored for user:', storedUser.email);
@@ -154,6 +160,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           userData = data.data.user;
           jwtToken = data.data.token;
           console.log('Backend login successful, user:', userData.name);
+          console.log('Backend user role received:', userData.role);
+          console.log('Full user data:', userData);
+          
+          // Temporary fix: Override role for admin@example.com
+          if (userData.email === 'admin@example.com' && userData.role !== 'SUPER_ADMIN') {
+            userData.role = 'SUPER_ADMIN';
+            console.log('Applied SUPER_ADMIN role override for admin@example.com');
+          }
         } else {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Backend login failed');

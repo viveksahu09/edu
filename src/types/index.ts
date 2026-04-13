@@ -4,7 +4,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "student" | "researcher" | "teacher";
+  role: "SUPER_ADMIN" | "ADMIN" | "student" | "researcher" | "teacher";
   institution: string;
   preferences: {
     subjects: string[];
@@ -15,6 +15,7 @@ export interface User {
     completedTopics: number;
   };
   profilePicture?: string;
+  isSuperAdmin?: boolean;
 }
 
 export interface UserRegistration {

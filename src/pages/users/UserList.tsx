@@ -209,8 +209,10 @@ export default function UserList() {
   };
 
   // Count admin users
-  const adminCount = users.filter(u => u.role.toLowerCase() === "admin").length;
-  const canCreateAdmin = adminCount < 1; // Single admin system
+  const adminCount = users.filter(user => 
+    user.role === "ADMIN" || user.role === "SUPER_ADMIN"
+  ).length;
+  const canCreateAdmin = adminCount < 3; // 3-admin limit system
 
   // Debug render state
   console.log('Debug - Render state:', {
@@ -228,11 +230,11 @@ export default function UserList() {
         <div>
           <h1 className="text-2xl font-bold">User Management</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Total Users: {users.length} | Admins: {adminCount}/1
+            Total Users: {users.length} | Admins: {adminCount}/3
           </p>
         </div>
         <div className="flex gap-2">
-          {user?.role === "admin" && canCreateAdmin && (
+          {(user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") && canCreateAdmin && (
             <Link
               to="/admin/register"
               className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
@@ -241,20 +243,29 @@ export default function UserList() {
               Add Admin
             </Link>
           )}
-          <Link
-            to="/admin/users/add"
-            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-          >
-            <UserPlus className="h-5 w-5 mr-2" />
-            Add User
-          </Link>
+          {adminCount < 3 && (
+            <Link
+              to="/admin/users/add"
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Add User
+            </Link>
+          )}
         </div>
       </div>
 
-      {adminCount >= 1 && (
+      {adminCount >= 3 && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-800">
-            <strong>Single Admin System:</strong> Only one admin account allowed.
+            <strong>Admin Limit Reached:</strong> Maximum 3 admin accounts allowed ({adminCount}/3).
+          </p>
+        </div>
+      )}
+      {adminCount > 0 && adminCount < 3 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Admin Count:</strong> {adminCount}/3 admin accounts available.
           </p>
         </div>
       )}
@@ -329,7 +340,10 @@ export default function UserList() {
                     ) : (
                       <div className="flex items-center">
                         {userItem.name}
-                        {userItem.role.toLowerCase() === "admin" && (
+                        {userItem.role === "SUPER_ADMIN" && (
+                          <span className="ml-2 text-xs bg-purple-100 text-purple-800 font-semibold px-2 py-1 rounded">SUPER ADMIN</span>
+                        )}
+                        {userItem.role === "ADMIN" && (
                           <span className="ml-2 text-xs text-red-600 font-semibold">ADMIN</span>
                         )}
                       </div>
@@ -384,18 +398,22 @@ export default function UserList() {
                         </>
                       ) : (
                         <>
-                          <button 
-                            onClick={() => handleEdit(userItem)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            <Edit className="h-5 w-5" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(userItem.id, userItem.name)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
+                          {userItem.role !== "SUPER_ADMIN" && (
+                            <button 
+                              onClick={() => handleEdit(userItem)}
+                              className="text-indigo-600 hover:text-indigo-900"
+                            >
+                              <Edit className="h-5 w-5" />
+                            </button>
+                          )}
+                          {userItem.role !== "SUPER_ADMIN" && (
+                            <button 
+                              onClick={() => handleDelete(userItem.id, userItem.name)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          )}
                         </>
                       )}
                     </div>

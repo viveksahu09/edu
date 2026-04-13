@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { singleAdminRestriction, preventSelfDeletion } = require('../middleware/adminRestrictions');
+const { adminLimitRestriction, preventSelfDeletion } = require('../middleware/adminRestrictions');
 const bcrypt = require('bcryptjs');
 
 // Get all users (admin only)

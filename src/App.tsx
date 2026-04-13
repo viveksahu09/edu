@@ -25,7 +25,6 @@ import RoleManagement from "./pages/users/RoleManagement";
 import NavigationManagement from "./pages/users/NavigationMangement";
 import DocumentManagement from "./pages/users/DocumentManagement";
 import ForgotPasswordForm from "./pages/auth/ForgotPasswordForm";
-import RegistrationForm from "./components/common/RegistrationForm";
 import UploadDocument from "./pages/documents/UploadDocument";
 import PDFViewer from "./pages/pdf/PDFViewer";
 import UniversitySlider from "./components/home/UniversitySlider";

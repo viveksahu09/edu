@@ -16,8 +16,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     >
       <div
         className={`absolute inset-0 ${
-          isDarkMode ? "bg-gray-900/90" : "bg-white/90"
-        } mix-blend-multiply`}
+          isDarkMode ? "bg-gray-900/30" : "bg-white/30"
+        }`}
       />
       <div className="relative">{children}</div>
     </div>

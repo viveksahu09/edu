@@ -103,12 +103,34 @@ const login = async (req, res) => {
       role: user.role,
     });
 
-    // Remove password from response
+    // Remove password from response and normalize role
+    const normalizedRole = () => {
+      switch(user.role) {
+        case 'admin':
+        case 'ADMIN':
+          return 'ADMIN';
+        case 'super_admin':
+        case 'SUPER_ADMIN':
+          return 'SUPER_ADMIN';
+        case 'student':
+        case 'STUDENT':
+          return 'student';
+        case 'teacher':
+        case 'TEACHER':
+          return 'teacher';
+        case 'researcher':
+        case 'RESEARCHER':
+          return 'researcher';
+        default:
+          return user.role || 'student';
+      }
+    };
+
     const userResponse = {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: normalizedRole(),
       institution: user.institution,
       preferences: user.preferences,
       progress: user.progress,
@@ -147,10 +169,38 @@ const getProfile = async (req, res) => {
       });
     }
 
+    // Normalize role for frontend compatibility
+    const normalizedRole = () => {
+      switch(user.role) {
+        case 'admin':
+        case 'ADMIN':
+          return 'ADMIN';
+        case 'super_admin':
+        case 'SUPER_ADMIN':
+          return 'SUPER_ADMIN';
+        case 'student':
+        case 'STUDENT':
+          return 'student';
+        case 'teacher':
+        case 'TEACHER':
+          return 'teacher';
+        case 'researcher':
+        case 'RESEARCHER':
+          return 'researcher';
+        default:
+          return user.role || 'student';
+      }
+    };
+
+    const normalizedUser = {
+      ...user.toJSON(),
+      role: normalizedRole(),
+    };
+
     res.status(200).json({
       success: true,
       data: {
-        user,
+        user: normalizedUser,
       },
     });
   } catch (error) {

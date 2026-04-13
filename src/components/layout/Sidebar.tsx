@@ -15,6 +15,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import type { NavItem } from "../../types";
 
 const navigation: NavItem[] = [
@@ -46,6 +47,16 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { isDarkMode, toggleTheme } = useTheme();
+  const { user } = useAuth();
+
+  // Filter navigation items based on user role
+  const filteredNavigation = navigation.filter((item) => {
+    // Hide admin section from non-admin users
+    if (item.title === "Admin") {
+      return user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
+    }
+    return true;
+  });
 
   return (
     <aside
@@ -58,7 +69,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="flex flex-col h-full">
         <nav className="flex-1 py-6 px-4">
           <ul className="space-y-1">
-            {navigation.map((item) => (
+            {filteredNavigation.map((item) => (
               <li key={item.title}>
                 <Link
                   to={item.href}
