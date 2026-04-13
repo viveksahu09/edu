@@ -16,6 +16,17 @@ const register = async (req, res) => {
       });
     }
 
+    // Check if trying to register as admin and enforce single admin rule
+    if (role === 'admin') {
+      const existingAdmin = await User.findOne({ where: { role: 'admin' } });
+      if (existingAdmin) {
+        return res.status(400).json({
+          success: false,
+          message: 'Admin account already exists. Only one admin is allowed.',
+        });
+      }
+    }
+
     // Create new user
     const user = await User.create({
       name,

@@ -6,6 +6,8 @@ const { connectDB } = require('./config/database');
 // Import routes
 const authRoutes = require('./routes/auth');
 const contributionRoutes = require('./routes/contributionRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const userManagementRoutes = require('./routes/userManagementRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,6 +26,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contributions', contributionRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/users', userManagementRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

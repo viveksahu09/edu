@@ -96,6 +96,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const storedToken = getToken();
         const storedUser = getUser();
 
+        // Check if token is a mock token and exclude it
+        if (storedToken && storedToken.startsWith('mock-')) {
+          console.log('Found mock token, clearing and skipping session restore');
+          removeToken();
+          removeUser();
+          setLoading(false);
+          return;
+        }
+
         if (storedToken && storedUser) {
           setTokenState(storedToken);
           setUserState(storedUser);
@@ -149,29 +158,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Backend login failed');
         }
-      } catch (backendError) {
-        console.warn('Backend unavailable, using mock data:', backendError);
+      } catch (backendError: any) {
+        console.error('Backend login failed:', backendError);
         
-        // Fallback to mock data
-        const mockUserData = {
-          id: "mock-" + Date.now(),
-          name: email.split('@')[0] || "Test User",
-          email: email,
-          role: "student" as const,
-          institution: "Test Institution",
-          preferences: {
-            subjects: [],
-            languages: ["English"],
-          },
-          progress: {
-            savedNotes: 0,
-            completedTopics: 0,
-          },
-        };
-        
-        userData = mockUserData;
-        jwtToken = 'mock-jwt-token-' + Date.now();
-        console.log('Mock login successful, user:', userData.name);
+        // Only fallback to mock if it's a network error, not authentication errors
+        if (backendError.message.includes('Failed to fetch') || backendError.message.includes('Network')) {
+          console.warn('Backend unavailable, using mock data:', backendError);
+          
+          // Fallback to mock data
+          const mockUserData = {
+            id: "mock-" + Date.now(),
+            name: email.split('@')[0] || "Test User",
+            email: email,
+            role: "student" as const,
+            institution: "Test Institution",
+            preferences: {
+              subjects: [],
+              languages: ["English"],
+            },
+            progress: {
+              savedNotes: 0,
+              completedTopics: 0,
+            },
+          };
+          
+          userData = mockUserData;
+          jwtToken = 'mock-jwt-token-' + Date.now();
+          console.log('Mock login successful, user:', userData.name);
+        } else {
+          // For authentication errors, don't fallback to mock
+          throw backendError;
+        }
       }
 
       // Final validation before storing
@@ -179,9 +196,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Invalid user data structure');
       }
 
-      // Store JWT token and user data in localStorage and React state
-      setToken(jwtToken);
-      setUser(userData);
+      // Store JWT token and user data in localStorage and React state (only if not mock)
+      if (!jwtToken.startsWith('mock-')) {
+        setToken(jwtToken);
+        setUser(userData);
+      }
       setTokenState(jwtToken);
       setUserState(userData);
 
@@ -223,6 +242,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated,
     loading,
   };
+
+  // Debug token state before providing to consumers
+  console.log('AuthContext - Providing to consumers:', {
+    token: token ? 'exists' : 'missing',
+    tokenLength: token?.length || 0,
+    tokenStart: token?.substring(0, 20) + '...',
+    isAuthenticated,
+    userEmail: user?.email
+  });
 
   return (
     <AuthContext.Provider value={value}>
