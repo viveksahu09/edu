@@ -15,13 +15,16 @@ export default function Profile() {
     institution: user?.institution || "",
   });
 
-  // Debug logging
-  console.log("Profile: Auth state", { isAuthenticated, user: user?.name });
-
   // Redirect to login if not authenticated
   useEffect(() => {
     console.log("Profile: Checking auth, isAuthenticated =", isAuthenticated);
     if (!isAuthenticated) {
+      // Debug logging
+      console.log("Profile: Auth state", { isAuthenticated, user: user?.name, userRole: user?.role });
+      console.log("Profile: User role check:", { userRole: user?.role, isSuperAdmin: user?.role === 'SUPER_ADMIN' });
+      console.log("Profile: User object:", user);
+      console.log("Profile: Raw user.role value:", user?.role);
+      console.log("Profile: Type of user.role:", typeof user?.role);
       console.log("Profile: Redirecting to login");
       navigate("/login");
     }
@@ -109,6 +112,7 @@ export default function Profile() {
               </div>
               <div className="mt-2">
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                  (user.role as string) === 'SUPER_ADMIN' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
                   (user.role as string) === 'admin' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
                   (user.role as string) === 'educator' || (user.role as string) === 'teacher' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
                   (user.role as string) === 'researcher' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :

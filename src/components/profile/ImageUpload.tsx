@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import { Camera } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Upload, User } from "lucide-react";
 
 interface ImageUploadProps {
   currentImage?: string;
@@ -11,24 +11,38 @@ export default function ImageUpload({
   onImageUpload,
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      
       onImageUpload(file);
     }
   };
 
+  const displayImage = preview || currentImage;
+
   return (
     <div className="relative">
-      <img
-        src={
-          currentImage ||
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-        }
-        alt="Profile"
-        className="w-32 h-32 rounded-full border-4 border-white object-cover"
-      />
+      {displayImage ? (
+        <img
+          src={displayImage}
+          alt="Profile"
+          className="w-32 h-32 rounded-full border-4 border-white object-cover"
+        />
+      ) : (
+        <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+          <User className="w-16 h-16 text-gray-400 dark:text-gray-300" />
+        </div>
+      )}
+      
       <input
         type="file"
         ref={fileInputRef}
@@ -36,11 +50,13 @@ export default function ImageUpload({
         accept="image/*"
         className="hidden"
       />
+      
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
+        className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+        title="Upload profile picture"
       >
-        <Camera className="w-5 h-5 text-gray-600" />
+        <Upload className="w-5 h-5 text-white" />
       </button>
     </div>
   );

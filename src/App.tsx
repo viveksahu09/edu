@@ -18,6 +18,8 @@ import SignUp from "./pages/auth/SignUp";
 import AdminRegister from "./pages/auth/AdminRegister";
 import SwaggerViewer from "./components/api/SwaggerViewer";
 import ApiTester from "./components/ApiTester";
+import CourseManagement from "./components/admin/CourseManagement";
+import CourseUpload from "./components/user/CourseUpload";
 import Profile from "./components/profile/UserProfile";
 import AdminDashboard from "./pages/users/Dashboard";
 import UserManagement from "./pages/users/UserManagement";
@@ -68,6 +70,17 @@ const App = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/admin/register" element={<AdminRegister />} />
+                    <Route path="/admin/documents/*" element={<DocumentManagement />} />
+                    <Route path="/admin/courses" element={
+                      <ProtectedRoute>
+                        <CourseManagement />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/upload" element={
+                      <ProtectedRoute>
+                        <CourseUpload />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                     {/* API Documentation */}
                     <Route path="/api-docs" element={<SwaggerViewer />} />

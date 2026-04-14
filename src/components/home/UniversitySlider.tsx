@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { universities } from "../../data/universities";
 import UniversityCard from "./UniversityCard";

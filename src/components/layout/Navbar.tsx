@@ -18,6 +18,7 @@ export default function Navbar({ toggleSidebar, isSidebarOpen }: NavbarProps) {
     isAuthenticated, 
     userName: user?.name, 
     userEmail: user?.email,
+    userRole: user?.role,
     loading 
   });
 
@@ -145,6 +146,16 @@ export default function Navbar({ toggleSidebar, isSidebarOpen }: NavbarProps) {
                   <User className="h-5 w-5" />
                   <span className="hidden sm:block font-medium">{user.name}</span>
                 </Link>
+                {/* Admin Panel - Only show for SUPER_ADMIN */}
+                {user.role === 'SUPER_ADMIN' && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 transition-colors"
+                  >
+                    <BookOpen className="h-5 w-5" />
+                    <span className="hidden sm:block font-medium">Admin Panel</span>
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

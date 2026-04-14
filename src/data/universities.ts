@@ -1,6 +1,35 @@
 import { University } from "../types/university";
 
 export const universities: University[] = [
+  // Existing universities...
+  // Add this for dynamic course management
+  {
+    id: "dynamic",
+    name: "Dynamic Courses",
+    slug: "dynamic",
+    image: "https://picsum.photos/seed/edu1/150",
+    degree: [
+      {
+        id: "dynamic",
+        slug: "dynamic",
+        name: "Dynamic Courses",
+        courses: [
+          {
+            id: "dynamic",
+            name: "Dynamic Courses",
+            semesters: [
+              {
+                number: 1,
+                subjects: [
+                  // This will be populated dynamically from admin uploads
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
   {
     id: "1",
     name: "Stanford University",
@@ -109,37 +138,37 @@ export const universities: University[] = [
                       {
                         id: "u1",
                         number: 1,
-                        title: "Unit 1",
-                        overview: "Unit 1 Overview",
-                        pdf: ["pdf1", "pdf2", "pdf3"],
+                        title: "Atomic Structure, Bonding and Molecular Interactions",
+                        overview: "Fundamental concepts of atomic structure, chemical bonding theories, molecular interactions, and their applications in engineering materials.",
+                        pdf: ["/sample.pdf"],
                       },
                       {
                         id: "u2",
                         number: 2,
-                        title: "Unit 2",
-                        overview: "Unit 2 Overview",
-                        pdf: ["pdf1", "pdf2", "pdf3"],
+                        title: "Thermodynamics and Chemical Equilibrium",
+                        overview: "Laws of thermodynamics, chemical equilibrium, phase rule, and applications of thermodynamic principles in chemical processes.",
+                        pdf: ["/sample.pdf"],
                       },
                       {
                         id: "u3",
                         number: 3,
-                        title: "Unit 3",
-                        overview: "Unit 3 Overview",
-                        pdf: ["pdf1", "pdf2", "pdf3"],
+                        title: "Electrochemistry and Corrosion",
+                        overview: "Electrochemical cells, electrode potentials, electrolysis, corrosion mechanisms, and methods of corrosion control in engineering applications.",
+                        pdf: ["/sample.pdf"],
                       },
                       {
                         id: "u4",
                         number: 4,
-                        title: "Unit 4",
-                        overview: "Unit 4 Overview",
-                        pdf: ["pdf1", "pdf2", "pdf3"],
+                        title: "Water Chemistry and Treatment",
+                        overview: "Water quality parameters, water treatment processes, hardness, softening, and industrial water treatment methods.",
+                        pdf: ["/sample.pdf"],
                       },
                       {
                         id: "u5",
                         number: 5,
-                        title: "Unit 5",
-                        overview: "Unit 5 Overview",
-                        pdf: ["pdf1", "pdf2", "pdf3"],
+                        title: "Polymers and Advanced Materials",
+                        overview: "Polymer chemistry, classification of polymers, polymerization techniques, and applications of advanced materials in engineering.",
+                        pdf: ["/sample.pdf"],
                       },
                     ],
                   },
@@ -549,12 +578,7 @@ export const universities: University[] = [
               {
                 number: 1,
                 subjects: [
-                  {
-                    id: "BT-101",
-                    name: "Engineering Chemistry",
-                    notes: "B-Tech Common to all Branches",
-                  },
-                ],
+                                  ],
               },
               {
                 number: 2,

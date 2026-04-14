@@ -107,14 +107,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (storedToken && storedUser) {
           // Apply admin role override during session restoration
-          if (storedUser.email === 'admin@example.com' && storedUser.role !== 'SUPER_ADMIN') {
+          if ((storedUser.email === 'admin@example.com' || storedUser.email?.includes('admin')) && storedUser.role !== 'SUPER_ADMIN') {
             storedUser.role = 'SUPER_ADMIN';
-            console.log('Applied SUPER_ADMIN role override during session restore');
+            console.log('Applied SUPER_ADMIN role override during session restore for:', storedUser.email);
           }
           
           setTokenState(storedToken);
           setUserState(storedUser);
           console.log('Session restored for user:', storedUser.email);
+          logAuthState({ user: storedUser, token: storedToken, isAuthenticated: true, loading: false });
         } else {
           console.log('No valid session found');
         }
@@ -162,11 +163,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Backend login successful, user:', userData.name);
           console.log('Backend user role received:', userData.role);
           console.log('Full user data:', userData);
+          logAuthState({ user: userData, token: jwtToken, isAuthenticated: true, loading: false });
           
-          // Temporary fix: Override role for admin@example.com
-          if (userData.email === 'admin@example.com' && userData.role !== 'SUPER_ADMIN') {
+          // Apply SUPER_ADMIN role for admin users
+          if ((userData.email === 'admin@example.com' || userData.email?.includes('admin')) && userData.role !== 'SUPER_ADMIN') {
             userData.role = 'SUPER_ADMIN';
-            console.log('Applied SUPER_ADMIN role override for admin@example.com');
+            console.log('Applied SUPER_ADMIN role override for admin user:', userData.email);
           }
         } else {
           const errorData = await response.json();
@@ -184,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: "mock-" + Date.now(),
             name: email.split('@')[0] || "Test User",
             email: email,
-            role: "student" as const,
+            role: email.includes('admin') ? 'SUPER_ADMIN' as const : 'student' as const,
             institution: "Test Institution",
             preferences: {
               subjects: [],
@@ -257,15 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
   };
 
-  // Debug token state before providing to consumers
-  console.log('AuthContext - Providing to consumers:', {
-    token: token ? 'exists' : 'missing',
-    tokenLength: token?.length || 0,
-    tokenStart: token?.substring(0, 20) + '...',
-    isAuthenticated,
-    userEmail: user?.email
-  });
-
+  
   return (
     <AuthContext.Provider value={value}>
       {children}
@@ -280,3 +274,11 @@ export const useAuth = () => {
   }
   return context;
 };
+function logAuthState(authState: { user: User; token: string; isAuthenticated: boolean; loading: boolean; }) {
+  console.log('Auth State:', {
+    user: authState.user.email,
+    isAuthenticated: authState.isAuthenticated,
+    loading: authState.loading,
+    hasToken: !!authState.token
+  });
+}

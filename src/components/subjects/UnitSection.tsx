@@ -1,4 +1,3 @@
-import React from "react";
 import { Download, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -8,6 +7,7 @@ interface UnitSectionProps {
   title: string;
   overview: string;
   isDarkMode: boolean;
+  pdfUrl?: string;
 }
 
 export default function UnitSection({
@@ -15,17 +15,38 @@ export default function UnitSection({
   title,
   overview,
   isDarkMode,
+  pdfUrl,
 }: UnitSectionProps) {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  const handleButtonClick = () => {
+  const handlePreviewClick = () => {
     try {
+      const previewUrl = pdfUrl || "/sample.pdf";
       navigate("/pdfviewer", {
-        state: { url: "https://example.com/path/to/your.pdf" },
+        state: { 
+          url: previewUrl,
+          title: title
+        },
       });
     } catch (err) {
-      setError("Failed to navigate to PDFViewer. Please try again.");
+      setError("Failed to open preview. Please try again.");
+      console.error(err);
+    }
+  };
+
+  const handleDownloadClick = () => {
+    try {
+      // Create a temporary link element for download
+      const link = document.createElement('a');
+      const downloadUrl = pdfUrl || "/sample.pdf";
+      link.href = downloadUrl;
+      link.download = `Engineering-Chemistry-Unit-${unitNumber}-${title.replace(/\s+/g, '-')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      setError("Failed to download. Please try again.");
       console.error(err);
     }
   };
@@ -51,7 +72,7 @@ export default function UnitSection({
         </div>
         <div className="flex items-center space-x-2">
           <button
-            onClick={handleButtonClick}
+            onClick={handlePreviewClick}
             className={`flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg ${
               isDarkMode ? "text-gray-300" : "text-gray-600"
             }`}
@@ -64,7 +85,10 @@ export default function UnitSection({
             Preview
           </button>
           {error && <div className="text-red-500">{error}</div>}
-          <button className="flex items-center px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          <button 
+            onClick={handleDownloadClick}
+            className="flex items-center px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
             <Download className="h-4 w-4 mr-2" />
             Download
           </button>

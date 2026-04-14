@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Select from "react-select";
 import { useParams } from "react-router-dom";
 import { universities } from "../data/universities";
@@ -74,7 +74,7 @@ export default function UniversityDetails() {
                     classNamePrefix="select"
                   />
                 </div>
-              </div>
+                              </div>
             </div>
           </div>
         </div>
@@ -85,6 +85,47 @@ export default function UniversityDetails() {
             isDarkMode ? "text-white" : "text-gray-900"
           }`}
         >
+          {/* Display All Degrees */}
+          <div className="mb-8">
+            <h2 className={`text-2xl font-bold mb-6 ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}>
+              Available Degrees
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {university.degree.map((degree) => (
+                <div 
+                  key={degree.id} 
+                  onClick={() => {
+                    setSelectedDegrees([degree]);
+                    setSelectedCourse(null);
+                  }}
+                  className={`p-6 rounded-lg cursor-pointer transition-all transform hover:scale-105 ${
+                    selectedDegrees.some(selected => selected.id === degree.id)
+                      ? "bg-indigo-600 text-white shadow-lg"
+                      : isDarkMode 
+                        ? "bg-gray-800 text-white hover:bg-gray-700 shadow-md" 
+                        : "bg-white text-gray-900 hover:bg-gray-50 shadow-md"
+                  }`}>
+                  <h3 className={`text-lg font-semibold mb-2 ${
+                    selectedDegrees.some(selected => selected.id === degree.id)
+                      ? "text-white"
+                      : isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>
+                    {degree.name}
+                  </h3>
+                  <p className={`text-sm ${
+                    selectedDegrees.some(selected => selected.id === degree.id)
+                      ? "text-indigo-100"
+                      : isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}>
+                    {degree.courses?.length || 0} courses available
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Course Selection */}
           <div className="flex flex-wrap gap-4 mb-8">
             {selectedDegrees.flatMap((degree) =>

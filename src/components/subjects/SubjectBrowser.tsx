@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Download } from "lucide-react";
+import { Download, Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Subject } from "../../types/university";
 import UnitSection from "./UnitSection";
 import BrowserToolbar from "./BrowserToolbar";
@@ -24,8 +25,9 @@ export default function SubjectBrowser({
   universityName,
 }: SubjectBrowserProps) {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
   const [tabs, setTabs] = useState<TabInfo[]>([]);
-  const [activeTab, setActiveTab] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const browserRef = useRef<HTMLDivElement | null>(null);
 
@@ -134,9 +136,36 @@ export default function SubjectBrowser({
                 </p>
               </div>
 
-              {/* Download All Button */}
-              <div className="flex justify-end mb-6">
-                <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+              {/* Download All and Upload Buttons */}
+              <div className="flex justify-end space-x-3 mb-6">
+                <button 
+                  onClick={() => navigate("/upload")}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Course
+                </button>
+                <button 
+                  onClick={() => {
+                    try {
+                      // Create a zip file or download all units individually
+                      activeSubject.units?.forEach((unit, index) => {
+                        setTimeout(() => {
+                          const link = document.createElement('a');
+                          const pdfUrl = unit.pdf?.[0] || "/sample.pdf";
+                      link.href = pdfUrl;
+                          link.download = `${activeSubject.name}-Unit-${unit.number}-${unit.title.replace(/\s+/g, '-')}.pdf`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }, index * 500); // Stagger downloads to avoid overwhelming the browser
+                      });
+                    } catch (err) {
+                      console.error("Failed to download all units:", err);
+                    }
+                  }}
+                  className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Download All Units
                 </button>
@@ -151,6 +180,7 @@ export default function SubjectBrowser({
                     title={unit.title}
                     overview={unit.overview}
                     isDarkMode={isDarkMode}
+                    pdfUrl={unit.pdf?.[0] || "/sample.pdf"}
                   />
                 ))}
               </div>
