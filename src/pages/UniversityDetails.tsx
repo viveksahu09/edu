@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Select from "react-select";
 import { useParams } from "react-router-dom";
 import { universities } from "../data/universities";
@@ -6,6 +6,8 @@ import SubjectBrowser from "../components/subjects/SubjectBrowser";
 import type { Course, Degree, Subject } from "../types/university";
 import Layout from "../components/layout/Layout";
 import { useTheme } from "../context/ThemeContext";
+import { getCourseSubmissions, fixCourseSubjectMappings } from "../services/courseService";
+import { Download, BookOpen } from "lucide-react";
 
 export default function UniversityDetails() {
   const { slug } = useParams<{ slug: string }>();
@@ -15,8 +17,18 @@ export default function UniversityDetails() {
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const { isDarkMode } = useTheme();
+  const [approvedCourses, setApprovedCourses] = useState<any[]>([]);
 
   const university = universities.find((u) => u.slug === slug);
+
+  useEffect(() => {
+    // Fix existing course mappings (one-time fix)
+    fixCourseSubjectMappings();
+    
+    // Load approved courses
+    const courses = getCourseSubmissions().filter(course => course.status === 'approved');
+    setApprovedCourses(courses);
+  }, []);
 
   if (!university) {
     return <div>University not found</div>;
@@ -36,6 +48,36 @@ export default function UniversityDetails() {
       return [...prev, subject];
     });
     setIsBrowserOpen(true);
+  };
+
+  const getApprovedCoursesForSubject = (subject: Subject) => {
+    // Debug logging
+    console.log('Filtering courses for subject:', {
+      subjectId: subject.id,
+      subjectName: subject.name,
+      universityId: university.id,
+      universityName: university.name,
+      totalApprovedCourses: approvedCourses.length
+    });
+    
+    const filteredCourses = approvedCourses.filter(course => {
+      // Handle multiple possible course IDs for the same course
+      const matches = (course.courseId === subject.id || 
+                     // Handle case where CS-101 should map to BT-205
+                     (course.courseId === 'CS-101' && subject.id === 'BT-205') ||
+                     // Handle case where course name matches
+                     (course.name === 'Basic Computer Engineering Materials' && subject.id === 'BT-205')) &&
+                     course.universityId === university.id.toString();
+      
+      if (matches) {
+        console.log('Found matching course:', course);
+      }
+      
+      return matches;
+    });
+    
+    console.log('Filtered courses count:', filteredCourses.length);
+    return filteredCourses;
   };
 
   return (
@@ -189,12 +231,69 @@ export default function UniversityDetails() {
                           {subject.name}
                         </h3>
                         <p
-                          className={`text-gray-600 mb4 ${
+                          className={`text-gray-600 mb-4 ${
                             isDarkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
                           {subject.notes}
                         </p>
+
+                        {/* Approved Courses Section */}
+                        {(() => {
+                          const subjectCourses = getApprovedCoursesForSubject(subject);
+                          if (subjectCourses.length > 0) {
+                            return (
+                              <div className={`mt-4 pt-4 border-t ${
+                                isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                              }`}>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <BookOpen className="h-4 w-4 text-indigo-600" />
+                                  <h4 className="font-semibold text-sm">
+                                    Approved Course Materials ({subjectCourses.length})
+                                  </h4>
+                                </div>
+                                <div className="space-y-2">
+                                  {subjectCourses.map((course) => (
+                                    <div
+                                      key={course.id}
+                                      className={`p-3 rounded-lg text-sm ${
+                                        isDarkMode 
+                                          ? 'bg-gray-700 text-gray-300' 
+                                          : 'bg-gray-50 text-gray-700'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <div className="font-medium text-xs mb-1">
+                                            {course.name}
+                                          </div>
+                                          <div className="text-xs opacity-75">
+                                            by {course.submittedBy} on {new Date(course.submittedAt).toLocaleDateString()}
+                                          </div>
+                                          {course.pdfFileName && (
+                                            <div className="text-xs opacity-75 mt-1">
+                                              File: {course.pdfFileName}
+                                            </div>
+                                          )}
+                                        </div>
+                                        <button
+                                          onClick={() => {
+                                            alert(`Downloading ${course.pdfFileName || 'course material'} for ${course.name}`);
+                                          }}
+                                          className="flex items-center gap-1 px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors"
+                                        >
+                                          <Download className="h-3 w-3" />
+                                          Download
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     ))}
                 </div>

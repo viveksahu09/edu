@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Users, FileText, CreditCard, TrendingUp, BookOpen, Code, Target, CheckCircle, XCircle, Eye, Search, Filter } from "lucide-react";
+import { Users, FileText, CreditCard, TrendingUp, BookOpen, Code, Target, CheckCircle, XCircle, Eye, Search, Filter, Upload } from "lucide-react";
+import { getCourseSubmissions, updateCourseStatus } from "../../services/courseService";
 
 interface Contribution {
   id: string;
@@ -19,11 +20,16 @@ interface Contribution {
 export default function Dashboard() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [selectedContribution, setSelectedContribution] = useState<Contribution | null>(null);
+  const [courseSubmissions, setCourseSubmissions] = useState<any[]>([]);
 
   useEffect(() => {
     // Load contributions from localStorage
     const storedContributions = JSON.parse(localStorage.getItem("researchContributions") || "[]");
     setContributions(storedContributions);
+    
+    // Load course submissions
+    const courses = getCourseSubmissions();
+    setCourseSubmissions(courses);
   }, []);
 
   const handleApprove = async (contributionId: string) => {
@@ -71,6 +77,22 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error rejecting contribution:", error);
     }
+  };
+
+  const handleApproveCourse = (courseId: string) => {
+    updateCourseStatus(courseId, 'approved');
+    const updatedCourses = courseSubmissions.map(course =>
+      course.id === courseId ? { ...course, status: 'approved' } : course
+    );
+    setCourseSubmissions(updatedCourses);
+  };
+
+  const handleRejectCourse = (courseId: string) => {
+    updateCourseStatus(courseId, 'rejected');
+    const updatedCourses = courseSubmissions.map(course =>
+      course.id === courseId ? { ...course, status: 'rejected' } : course
+    );
+    setCourseSubmissions(updatedCourses);
   };
 
   const stats = [
@@ -199,6 +221,89 @@ export default function Dashboard() {
               <div className="text-center pt-4">
                 <button className="text-indigo-600 hover:text-indigo-900 text-sm">
                   View all {pendingContributions.length} pending contributions
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Course Management Section */}
+      <div className="bg-white rounded-lg shadow p-6 mt-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Upload className="h-5 w-5 text-indigo-600" />
+            Course Submissions
+          </h2>
+          <div className="flex gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-600">
+                {courseSubmissions.filter(c => c.status === 'pending').length}
+              </div>
+              <div className="text-sm text-gray-600">Pending</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {courseSubmissions.filter(c => c.status === 'approved').length}
+              </div>
+              <div className="text-sm text-gray-600">Approved</div>
+            </div>
+          </div>
+        </div>
+
+        {courseSubmissions.filter(c => c.status === 'pending').length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No pending course submissions to review
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {courseSubmissions
+              .filter(c => c.status === 'pending')
+              .slice(0, 5)
+              .map((course) => (
+                <div key={course.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Upload className="h-4 w-4 text-indigo-600" />
+                        <h3 className="font-medium text-gray-900">{course.name}</h3>
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                          {course.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        University: {course.universityId} | Degree: {course.degreeId} | Course: {course.courseId}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>by {course.submittedBy}</span>
+                        <span>{new Date(course.submittedAt).toLocaleDateString()}</span>
+                        {course.pdfFileName && <span>File: {course.pdfFileName}</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button
+                        onClick={() => handleApproveCourse(course.id)}
+                        className="text-green-600 hover:text-green-900"
+                        title="Approve Course"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleRejectCourse(course.id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Reject Course"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            
+            {courseSubmissions.filter(c => c.status === 'pending').length > 5 && (
+              <div className="text-center pt-4">
+                <button className="text-indigo-600 hover:text-indigo-900 text-sm">
+                  View all {courseSubmissions.filter(c => c.status === 'pending').length} pending courses
                 </button>
               </div>
             )}

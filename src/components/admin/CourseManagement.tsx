@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import { getCourseSubmissions, updateCourseStatus } from "../../services/courseService";
 
 interface PendingCourse {
   id: string;
@@ -24,6 +25,12 @@ export default function CourseManagement() {
     courseId: '',
     pdfFile: null as File | null
   });
+
+  // Load courses from shared storage
+  useEffect(() => {
+    const courses = getCourseSubmissions();
+    setPendingCourses(courses);
+  }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -51,11 +58,11 @@ export default function CourseManagement() {
     setPendingCourses(prev => [...prev, newCourse]);
     setUploadForm({ name: '', universityId: '', degreeId: '', courseId: '', pdfFile: null });
     
-    // Here you would typically send this to your backend for admin approval
     console.log('Course submitted for approval:', newCourse);
   };
 
   const handleApprove = (courseId: string) => {
+    updateCourseStatus(courseId, 'approved');
     setPendingCourses(prev => 
       prev.map(course => 
         course.id === courseId 
@@ -66,6 +73,7 @@ export default function CourseManagement() {
   };
 
   const handleReject = (courseId: string) => {
+    updateCourseStatus(courseId, 'rejected');
     setPendingCourses(prev => 
       prev.map(course => 
         course.id === courseId 

@@ -34,6 +34,7 @@ import Research from "./pages/Research";
 import SubjectPage from "./pages/research/SubjectPage";
 import TopicDetailPage from "./pages/research/TopicDetailPage";
 import ContributePage from "./pages/research/ContributePage";
+import ApprovedCourses from "./pages/ApprovedCourses";
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -104,6 +105,11 @@ const App = () => {
                     <Route path="/pdfviewer" element={
                       <ProtectedRoute>
                         <PDFViewer />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/approved-courses" element={
+                      <ProtectedRoute>
+                        <ApprovedCourses />
                       </ProtectedRoute>
                     } />
                     {/* Public Routes */}

@@ -1,6 +1,8 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import { submitCourseForApproval, getCourseSubmissions } from "../../services/courseService";
+import { useAuth } from "../../context/AuthContext";
 
 interface UserCourseUpload {
   id: string;
@@ -15,6 +17,7 @@ interface UserCourseUpload {
 
 export default function CourseUpload() {
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
   const [uploadedCourses, setUploadedCourses] = useState<UserCourseUpload[]>([]);
   const [uploadForm, setUploadForm] = useState({
     name: '',
@@ -24,6 +27,40 @@ export default function CourseUpload() {
     pdfFile: null as File | null
   });
 
+  const rgpvSubjects = [
+    { id: 'BT-101', name: 'Engineering Chemistry' },
+    { id: 'BT-102', name: 'Mathematics-I' },
+    { id: 'BT-103', name: 'English for Communication' },
+    { id: 'BT-104', name: 'Basic Electrical & Electronics Engineering' },
+    { id: 'BT-105', name: 'Engineering Graphics' },
+    { id: 'BT-106', name: 'Workshop Practice' },
+    { id: 'BT-107', name: 'Internship-I' },
+    { id: 'BT-108', name: 'Swachh Bharat Summer Internship' },
+    { id: 'BT-201', name: 'Engineering Physics' },
+    { id: 'BT-202', name: 'Mathematics-II' },
+    { id: 'BT-203', name: 'Basic Mechanical Engineering' },
+    { id: 'BT-204', name: 'Basic Civil Engineering & Mechanics' },
+    { id: 'BT-205', name: 'Basic Computer Engineering' },
+    { id: 'BT-206', name: 'Language Lab & Seminars' },
+  ];
+
+  // Load existing courses from shared storage
+  useEffect(() => {
+    const courses = getCourseSubmissions()
+      .filter(course => course.submittedBy === user?.email)
+      .map(course => ({
+        id: course.id,
+        name: course.name,
+        pdfFile: course.pdfFile,
+        universityId: course.universityId,
+        degreeId: course.degreeId,
+        courseId: course.courseId,
+        status: course.status as 'uploaded' | 'processing' | 'completed',
+        uploadedAt: course.submittedAt
+      }));
+    setUploadedCourses(courses);
+  }, [user]);
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
@@ -31,26 +68,40 @@ export default function CourseUpload() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadForm.pdfFile || !uploadForm.name.trim()) return;
+    if (!uploadForm.pdfFile || !uploadForm.name.trim() || !user) return;
 
-    const newCourse: UserCourseUpload = {
-      id: Date.now().toString(),
-      name: uploadForm.name,
-      pdfFile: uploadForm.pdfFile,
-      status: 'uploaded',
-      uploadedAt: new Date().toISOString(),
-      universityId: uploadForm.universityId,
-      degreeId: uploadForm.degreeId,
-      courseId: uploadForm.courseId
-    };
+    try {
+      // Submit course for approval using shared storage
+      const submission = await submitCourseForApproval({
+        name: uploadForm.name,
+        pdfFile: uploadForm.pdfFile,
+        submittedBy: user.email,
+        universityId: uploadForm.universityId,
+        degreeId: uploadForm.degreeId,
+        courseId: uploadForm.courseId
+      });
 
-    setUploadedCourses(prev => [...prev, newCourse]);
-    setUploadForm({ name: '', universityId: '', degreeId: '', courseId: '', pdfFile: null });
-    
-    // Here you would typically upload the PDF to your storage/backend
-    console.log('Course uploaded:', newCourse);
+      // Update local state to show the uploaded course
+      const newCourse: UserCourseUpload = {
+        id: submission.id,
+        name: submission.name,
+        pdfFile: uploadForm.pdfFile,
+        status: 'uploaded',
+        uploadedAt: submission.submittedAt,
+        universityId: submission.universityId,
+        degreeId: submission.degreeId,
+        courseId: submission.courseId
+      };
+
+      setUploadedCourses(prev => [...prev, newCourse]);
+      setUploadForm({ name: '', universityId: '', degreeId: '', courseId: '', pdfFile: null });
+      
+      console.log('Course submitted for approval:', submission);
+    } catch (error) {
+      console.error('Failed to submit course:', error);
+    }
   };
 
   return (
@@ -95,9 +146,9 @@ export default function CourseUpload() {
                 required
               >
                 <option value="">Select University</option>
-                <option value="1">Rajiv Gandhi Proudyogiki Vishwavidyalaya</option>
-                <option value="2">Stanford University</option>
-                <option value="3">MIT</option>
+                <option value="3">Rajiv Gandhi Proudyogiki Vishwavidyalaya</option>
+                <option value="1">Stanford University</option>
+                <option value="2">MIT</option>
               </select>
             </div>
 
@@ -121,18 +172,23 @@ export default function CourseUpload() {
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Course ID
+                Subject (Course ID)
               </label>
-              <input
-                type="text"
+              <select
                 value={uploadForm.courseId}
                 onChange={(e) => setUploadForm(prev => ({ ...prev, courseId: e.target.value }))}
                 className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 ${
                   isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
                 }`}
-                placeholder="Enter course ID"
                 required
-              />
+              >
+                <option value="">Select Subject</option>
+                {rgpvSubjects.map(subject => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name} ({subject.id})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
