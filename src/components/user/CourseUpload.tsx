@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
-import { submitCourseForApproval, getCourseSubmissions } from "../../services/courseService";
+import { getCourseSubmissions, submitCourseForApproval, updateCoursePdf } from "../../services/courseService";
 import { useAuth } from "../../context/AuthContext";
 
 interface UserCourseUpload {
   id: string;
   name: string;
-  pdfFile: File | null;
+  pdfFile: File | null | string;
+  pdfFileName?: string;
   universityId: string;
   degreeId: string;
   courseId: string;
-  status: 'uploaded' | 'processing' | 'completed';
-  uploadedAt: string;
+  status: 'uploaded' | 'processing' | 'completed' | 'pending' | 'approved' | 'rejected';
+  submittedAt: string;
+  submittedBy: string;
+  updatedAt?: string;
 }
 
 export default function CourseUpload() {
@@ -52,11 +55,14 @@ export default function CourseUpload() {
         id: course.id,
         name: course.name,
         pdfFile: course.pdfFile,
+        pdfFileName: course.pdfFileName,
         universityId: course.universityId,
         degreeId: course.degreeId,
         courseId: course.courseId,
-        status: course.status as 'uploaded' | 'processing' | 'completed',
-        uploadedAt: course.submittedAt
+        status: course.status as 'uploaded' | 'processing' | 'completed' | 'pending' | 'approved' | 'rejected',
+        submittedAt: course.submittedAt,
+        submittedBy: course.submittedBy,
+        updatedAt: course.updatedAt
       }));
     setUploadedCourses(courses);
   }, [user]);
@@ -65,6 +71,33 @@ export default function CourseUpload() {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       setUploadForm(prev => ({ ...prev, pdfFile: file }));
+    }
+  };
+
+  const handlePdfChange = (courseId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      const success = updateCoursePdf(courseId, file);
+      if (success) {
+        // Refresh the courses list
+        const updatedCourses = getCourseSubmissions()
+          .filter(course => course.submittedBy === user?.email)
+          .map(course => ({
+            id: course.id,
+            name: course.name,
+            pdfFile: course.pdfFile,
+            pdfFileName: course.pdfFileName,
+            universityId: course.universityId,
+            degreeId: course.degreeId,
+            courseId: course.courseId,
+            status: course.status as 'uploaded' | 'processing' | 'completed' | 'pending' | 'approved' | 'rejected',
+            submittedAt: course.submittedAt,
+            submittedBy: course.submittedBy,
+            updatedAt: course.updatedAt
+          }));
+        setUploadedCourses(updatedCourses);
+        alert('PDF updated successfully!');
+      }
     }
   };
 
@@ -85,14 +118,15 @@ export default function CourseUpload() {
 
       // Update local state to show the uploaded course
       const newCourse: UserCourseUpload = {
-        id: submission.id,
-        name: submission.name,
+        id: Date.now().toString(),
+        name: uploadForm.name,
         pdfFile: uploadForm.pdfFile,
         status: 'uploaded',
-        uploadedAt: submission.submittedAt,
-        universityId: submission.universityId,
-        degreeId: submission.degreeId,
-        courseId: submission.courseId
+        submittedAt: new Date().toISOString(),
+        submittedBy: user?.email || '',
+        universityId: uploadForm.universityId,
+        degreeId: uploadForm.degreeId,
+        courseId: uploadForm.courseId
       };
 
       setUploadedCourses(prev => [...prev, newCourse]);
@@ -248,11 +282,11 @@ export default function CourseUpload() {
                         University: {course.universityId} | Degree: {course.degreeId} | Course: {course.courseId}
                       </p>
                       <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Uploaded: {new Date(course.uploadedAt).toLocaleDateString()}
+                        Uploaded: {new Date(course.submittedAt).toLocaleDateString()}
                       </p>
                     </div>
                     
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-2">
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                         course.status === 'uploaded' 
                           ? 'bg-green-100 text-green-800' 
@@ -262,6 +296,23 @@ export default function CourseUpload() {
                       }`}>
                         {course.status}
                       </span>
+                      
+                      {/* PDF Change Button */}
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => handlePdfChange(course.id, e)}
+                          className="hidden"
+                          id={`pdf-change-${course.id}`}
+                        />
+                        <label
+                          htmlFor={`pdf-change-${course.id}`}
+                          className="cursor-pointer inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                        >
+                          Change PDF
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>

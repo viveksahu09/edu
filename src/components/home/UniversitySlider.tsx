@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { universities } from "../../data/universities";
-import UniversityCard from "./UniversityCard";
+import UniversitiesPageUniversityCard from "./UniversitiesPageUniversityCard";
 import { useTheme } from "../../context/ThemeContext";
 
 export default function UniversitySlider() {
   const { isDarkMode } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
-  const [startIndex, setStartIndex] = useState(0);
-  const itemsPerSlide = 3;
 
   const filteredUniversities = universities.filter(
     (uni) =>
@@ -16,22 +14,7 @@ export default function UniversitySlider() {
       uni.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const nextSlide = () => {
-    setStartIndex((prev) =>
-      prev + itemsPerSlide >= filteredUniversities.length
-        ? 0
-        : prev + itemsPerSlide
-    );
-  };
-
-  const prevSlide = () => {
-    setStartIndex((prev) =>
-      prev - itemsPerSlide < 0
-        ? Math.max(0, filteredUniversities.length - itemsPerSlide)
-        : prev - itemsPerSlide
-    );
-  };
-
+  
   return (
     <section className={`py-12 ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
       <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,38 +48,11 @@ export default function UniversitySlider() {
           )}
         </div>
 
-        <div className="relative">
-          <button
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6 bg-white rounded-full p-2 shadow-lg z-10"
-          >
-            <ChevronLeft className="h-6 w-6 text-gray-600" />
-          </button>
-
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${
-                  startIndex * (100 / itemsPerSlide)
-                }%)`,
-              }}
-            >
-              {filteredUniversities.map((university) => (
-                <div key={university.id} className="flex-none w-1/3 px-4">
-                  <UniversityCard university={university} />
-                </div>
+        <div className="grid grid-cols-3 gap-8">
+              {filteredUniversities.slice(0, 9).map((university) => (
+                <UniversitiesPageUniversityCard key={university.id} university={university} />
               ))}
             </div>
-          </div>
-
-          <button
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-6 bg-white rounded-full p-2 shadow-lg z-10"
-          >
-            <ChevronRight className="h-6 w-6 text-gray-600" />
-          </button>
-        </div>
       </div>
       <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
         <div

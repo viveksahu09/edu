@@ -1,6 +1,5 @@
-import React from 'react';
 import { universities } from '../../data/universities';
-import UniversityCard from './UniversityCard';
+import HomepageUniversityCard from './HomepageUniversityCard';
 
 export default function UniversitySection() {
   return (
@@ -11,7 +10,7 @@ export default function UniversitySection() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {universities.map((university) => (
-            <UniversityCard key={university.id} university={university} />
+            <HomepageUniversityCard key={university.id} university={university} />
           ))}
         </div>
       </div>

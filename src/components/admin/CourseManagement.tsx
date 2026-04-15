@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
-import { getCourseSubmissions, updateCourseStatus } from "../../services/courseService";
+import { getCourseSubmissions, updateCourseStatus, updateCoursePdf } from "../../services/courseService";
 
 interface PendingCourse {
   id: string;
   name: string;
-  pdfFile: File | null;
+  pdfFile: File | null | string;
+  pdfFileName?: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedBy: string;
   submittedAt: string;
   universityId: string;
   degreeId: string;
   courseId: string;
+  updatedAt?: string;
 }
 
 export default function CourseManagement() {
@@ -81,6 +83,19 @@ export default function CourseManagement() {
           : course
       )
     );
+  };
+
+  const handlePdfChange = (courseId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      const success = updateCoursePdf(courseId, file);
+      if (success) {
+        // Refresh the courses list
+        const updatedCourses = getCourseSubmissions();
+        setPendingCourses(updatedCourses);
+        alert('PDF updated successfully!');
+      }
+    }
   };
 
   return (
@@ -238,20 +253,46 @@ export default function CourseManagement() {
                       </span>
                       
                       {course.status === 'pending' && (
-                        <>
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleApprove(course.id)}
-                            className="p-1 text-green-600 hover:text-green-800"
+                            className="p-2 text-green-600 hover:bg-green-100 rounded-full transition-colors"
+                            title="Approve"
                           >
-                            Approve
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
                           </button>
                           <button
                             onClick={() => handleReject(course.id)}
-                            className="p-1 text-red-600 hover:text-red-800"
+                            className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                            title="Reject"
                           >
-                            Reject
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
                           </button>
-                        </>
+                          
+                          {/* PDF Change Button */}
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) => handlePdfChange(course.id, e)}
+                              className="hidden"
+                              id={`admin-pdf-change-${course.id}`}
+                            />
+                            <label
+                              htmlFor={`admin-pdf-change-${course.id}`}
+                              className="cursor-pointer inline-flex items-center p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                              title="Change PDF"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </label>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 interface CourseSubmission {
   id: string;
   name: string;
-  pdfFile: File | null;
+  pdfFile: File | null | string; // Can be File object (for upload) or base64 string (for storage)
   pdfFileName?: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedBy: string;
@@ -9,6 +9,7 @@ interface CourseSubmission {
   universityId: string;
   degreeId: string;
   courseId: string;
+  updatedAt?: string; // Added for tracking PDF updates
 }
 
 const COURSE_STORAGE_KEY = 'courseSubmissions';
@@ -54,13 +55,16 @@ export const submitCourseForApproval = async (
     id: Date.now().toString(),
     status: 'pending',
     submittedAt: new Date().toISOString(),
-    pdfFileName: courseData.pdfFile?.name,
+    pdfFileName: courseData.pdfFile instanceof File ? courseData.pdfFile.name : undefined,
   };
 
   // Convert file to base64 for storage
   let base64File = null;
-  if (courseData.pdfFile) {
+  if (courseData.pdfFile instanceof File) {
     base64File = await fileToBase64(courseData.pdfFile);
+  } else if (typeof courseData.pdfFile === 'string') {
+    // If it's already a base64 string, use it directly
+    base64File = courseData.pdfFile;
   }
 
   // Get existing submissions
@@ -129,6 +133,37 @@ export const deleteCourseSubmission = (courseId: string): void => {
   const updatedSubmissions = submissions.filter(course => course.id !== courseId);
   
   localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(updatedSubmissions));
+};
+
+export const updateCoursePdf = (courseId: string, newPdfFile: File): boolean => {
+  const submissions = getCourseSubmissions();
+  const courseIndex = submissions.findIndex(course => course.id === courseId);
+  
+  if (courseIndex === -1) {
+    console.error('Course not found:', courseId);
+    return false;
+  }
+  
+  // Convert new PDF to base64
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const base64String = event.target?.result as string;
+    
+    // Update the course with new PDF (store as base64 string in localStorage)
+    submissions[courseIndex] = {
+      ...submissions[courseIndex],
+      pdfFile: base64String, // Store as base64 string
+      pdfFileName: newPdfFile.name,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Save updated submissions
+    localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(submissions));
+    console.log('Course PDF updated successfully');
+  };
+  
+  reader.readAsDataURL(newPdfFile);
+  return true;
 };
 
 // Fix existing course data to use correct subject IDs
